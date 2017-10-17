@@ -5,17 +5,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ProxyProvider.Models
 {
-    public class ProxyProviderDbContext : DbContext
+    /// <summary>
+    /// TODO: This class is used for generating migrations quickly, and shouldn't be included by design.
+    /// </summary>
+    public class DefaultProxyProviderDbContext : DbContext
     {
         public DbSet<Proxy> Proxies { get; set; }
         public DbSet<ProxyUsage> ProxyUsages { get; set; }
         public DbSet<PurposeHttpClientOptions> PurposeClientOptionses { get; set; }
 
-        public ProxyProviderDbContext()
+        protected DefaultProxyProviderDbContext()
         {
         }
 
-        public ProxyProviderDbContext(DbContextOptions<ProxyProviderDbContext> options) : base(options)
+        public DefaultProxyProviderDbContext(DbContextOptions<DefaultProxyProviderDbContext> options) : base(options)
         {
         }
 

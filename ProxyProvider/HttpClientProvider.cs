@@ -12,14 +12,21 @@ namespace ProxyProvider
     {
         private readonly string _proxyDbConnectionString;
 
-        public HttpClientProvider()
+        protected HttpClientProvider()
         {
         }
 
-        public HttpClientProvider(string proxyDbConnectionString)
+        protected HttpClientProvider(string proxyDbConnectionString)
         {
             _proxyDbConnectionString = proxyDbConnectionString;
         }
+
+        /// <summary>
+        /// Change the provider if needed
+        /// </summary>
+        /// <returns></returns>
+        protected virtual async Task<DefaultProxyProviderDbContext> GetDbContext() => new DefaultProxyProviderDbContext(
+            new DbContextOptionsBuilder<DefaultProxyProviderDbContext>().UseMySql(_proxyDbConnectionString).Options);
 
         public virtual async Task<HttpClient> GetClient(string purpose)
         {
@@ -27,8 +34,7 @@ namespace ProxyProvider
             {
                 return new HttpClient();
             }
-            var db = new ProxyProviderDbContext(new DbContextOptionsBuilder<ProxyProviderDbContext>()
-                .UseMySql(_proxyDbConnectionString).Options);
+            var db = await GetDbContext();
             var options = await db.PurposeClientOptionses.FirstOrDefaultAsync(t => t.Purpose == purpose);
             HttpClient client;
             if (options != null)

@@ -26,8 +26,12 @@ namespace ProxyProvider.Collectors.Infrastructures
             EventId = new EventId(0, GetType().Name);
         }
 
-        protected virtual async Task<ProxyProviderDbContext> GetDb() => new ProxyProviderDbContext(
-            new DbContextOptionsBuilder<ProxyProviderDbContext>().UseMySql(_options.ConnectionString).Options);
+        /// <summary>
+        /// Change the provider if needed
+        /// </summary>
+        /// <returns></returns>
+        protected virtual async Task<DefaultProxyProviderDbContext> GetDbContext() => new DefaultProxyProviderDbContext(
+            new DbContextOptionsBuilder<DefaultProxyProviderDbContext>().UseMySql(_options.ConnectionString).Options);
 
         protected abstract Task<List<Proxy>> GetProxies(CQ cq);
 
@@ -76,7 +80,7 @@ namespace ProxyProvider.Collectors.Infrastructures
                                     }
                                 }
 
-                                var db = await GetDb();
+                                var db = await GetDbContext();
                                 var dbExistedProxies = await db.Proxies.AsNoTracking()
                                     .Where(t => uniqueProxies.Any(a => a.Port == t.Port && a.Ip == t.Ip))
                                     .ToDictionaryAsync(t => $"{t.Ip}:{t.Port}", t => t);
