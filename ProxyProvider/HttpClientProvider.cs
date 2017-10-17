@@ -8,15 +8,18 @@ using ProxyProvider.Models;
 
 namespace ProxyProvider
 {
+    /// <summary>
+    /// Default provider for common usage.
+    /// </summary>
     public class HttpClientProvider
     {
         private readonly string _proxyDbConnectionString;
 
-        protected HttpClientProvider()
+        public HttpClientProvider()
         {
         }
 
-        protected HttpClientProvider(string proxyDbConnectionString)
+        public HttpClientProvider(string proxyDbConnectionString)
         {
             _proxyDbConnectionString = proxyDbConnectionString;
         }
