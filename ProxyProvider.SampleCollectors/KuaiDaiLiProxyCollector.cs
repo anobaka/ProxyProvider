@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CsQuery;
 using Microsoft.Extensions.Logging;
-using ProxyProvider.Models;
+using ProxyProvider.Abstractions.Models;
 using ProxyProvider.SampleCollectors.Infrastructures;
 
 namespace ProxyProvider.SampleCollectors

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using ProxyProvider.Abstractions;
 using ProxyProvider.HttpClientProvider.Models;
 using ProxyProvider.HttpClientProvider.Models.RequestModels;
 
@@ -11,42 +12,43 @@ namespace ProxyProvider.HttpClientProvider
     /// <summary>
     /// Default provider for common usage.
     /// </summary>
-    public class OptionsHttpClientProvider : IHttpClientProvider
+    public class ConfigurableHttpClientProvider : IHttpClientProvider
     {
-        private readonly string _proxyHttpClientProviderDbConnectionString;
+        private readonly string _dbConnectionString;
+        private readonly IProxyProvider _proxyProvider;
 
         /// <summary>
         /// Customize mechanism to get <see cref="HttpClientProviderDbContext"/>
         /// </summary>
-        public OptionsHttpClientProvider()
+        public ConfigurableHttpClientProvider(IProxyProvider proxyProvider)
         {
+            _proxyProvider = proxyProvider;
         }
 
         /// <summary>
         /// Get <see cref="HttpClientProviderDbContext"/> by default mechanism.
         /// </summary>
-        /// <param name="proxyHttpClientProviderDbConnectionString"></param>
-        public OptionsHttpClientProvider(string proxyHttpClientProviderDbConnectionString)
+        /// <param name="dbConnectionString"></param>
+        /// <param name="proxyProvider"></param>
+        public ConfigurableHttpClientProvider(string dbConnectionString, IProxyProvider proxyProvider)
         {
-            _proxyHttpClientProviderDbConnectionString = proxyHttpClientProviderDbConnectionString;
+            _dbConnectionString = dbConnectionString;
+            _proxyProvider = proxyProvider;
         }
 
         /// <summary>
         /// Change the provider if needed
         /// </summary>
         /// <returns></returns>
-        protected virtual async Task<HttpClientProviderDbContext> GetDbContext() => new HttpClientProviderDbContext(
+        protected virtual HttpClientProviderDbContext GetDbContext() => new HttpClientProviderDbContext(
             new DbContextOptionsBuilder<HttpClientProviderDbContext>()
-                .UseMySql(_proxyHttpClientProviderDbConnectionString).Options);
-
-        protected virtual async Task<ProxyProvider> GetProxyProvider() =>
-            new ProxyProvider(_proxyHttpClientProviderDbConnectionString);
+                .UseMySql(_dbConnectionString).Options);
 
         public async Task AddOrUpdatePurposeHttpClientOptions(HttpClientOptionsAddOrUpdateRequestModel model)
         {
-            var ctx = await GetDbContext();
+            var ctx = GetDbContext();
             var existedOptions =
-                await ctx.HttpClientOptionses.FirstOrDefaultAsync(t => t.Purpose == model.Purpose);
+                await ctx.HttpClientOptions.FirstOrDefaultAsync(t => t.Purpose == model.Purpose);
             if (existedOptions != null)
             {
                 existedOptions.DefaultHeaders = model.DefaultHeaders;
@@ -62,27 +64,26 @@ namespace ProxyProvider.HttpClientProvider
                     ProxyLockLifetime = model.ProxyLockLifetime,
                     Purpose = model.Purpose
                 };
-                ctx.HttpClientOptionses.Add(existedOptions);
+                ctx.HttpClientOptions.Add(existedOptions);
             }
             await ctx.SaveChangesAsync();
         }
 
         public virtual async Task<HttpClient> GetClient(string purpose)
         {
-            if (string.IsNullOrEmpty(_proxyHttpClientProviderDbConnectionString))
+            if (string.IsNullOrEmpty(_dbConnectionString))
             {
                 return new HttpClient();
             }
 
-            var db = await GetDbContext();
-            var options = await db.HttpClientOptionses.FirstOrDefaultAsync(t => t.Purpose == purpose);
+            var db = GetDbContext();
+            var options = await db.HttpClientOptions.FirstOrDefaultAsync(t => t.Purpose == purpose);
             HttpClient client;
             if (options != null)
             {
                 if (options.UseProxy)
                 {
-                    var proxyProvider = await GetProxyProvider();
-                    var proxy = await proxyProvider.Get(purpose, DateTime.Now.AddDays(-2));
+                    var proxy = await _proxyProvider.Use(purpose);
                     client = new HttpClient(new HttpClientHandler
                     {
                         Proxy = proxy == null

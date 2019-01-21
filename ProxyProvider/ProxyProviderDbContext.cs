@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using ProxyProvider.Models;
+using ProxyProvider.Abstractions.Models;
 
 namespace ProxyProvider
 {
@@ -20,14 +20,8 @@ namespace ProxyProvider
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Proxy>(t =>
-            {
-                t.HasIndex(a => new {a.Ip, a.Port}).IsUnique();
-            });
-            modelBuilder.Entity<ProxyUsage>(t =>
-            {
-                t.HasIndex(a => new { a.ProxyId, a.Purpose }).IsUnique();
-            });
+            modelBuilder.Entity<Proxy>(t => { t.HasIndex(a => a.UniqueKey).IsUnique(); });
+            modelBuilder.Entity<ProxyUsage>(t => { t.HasIndex(a => new {a.ProxyId, a.Purpose}).IsUnique(); });
             base.OnModelCreating(modelBuilder);
         }
     }

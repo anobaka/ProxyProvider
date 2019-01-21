@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace ProxyProvider.Models
+namespace ProxyProvider.Abstractions.Models
 {
     public class ProxyUsage
     {

@@ -6,14 +6,13 @@
 
   <ItemGroup>
     <PackageReference Include="CsQuery.NETStandard" Version="1.3.6.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.2.0" />
     <PackageReference Include="Quartz" Version="3.0.7" />
     <!--Change the provider if needed-->
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="2.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ProxyProvider.Abstractions\ProxyProvider.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

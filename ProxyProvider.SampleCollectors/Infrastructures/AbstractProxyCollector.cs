@@ -1,17 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
 using System.Threading.Tasks;
 using CsQuery;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using ProxyProvider.Models;
+using ProxyProvider.Abstractions.Collectors;
+using ProxyProvider.Abstractions.Models;
 
-namespace ProxyProvider.Collectors.Infrastructures
+namespace ProxyProvider.SampleCollectors.Infrastructures
 {
     public abstract class AbstractProxyCollector : IProxyCollector
     {
@@ -30,8 +28,8 @@ namespace ProxyProvider.Collectors.Infrastructures
         /// Change the provider if needed
         /// </summary>
         /// <returns></returns>
-        protected virtual async Task<DefaultProxyProviderDbContext> GetDbContext() => new DefaultProxyProviderDbContext(
-            new DbContextOptionsBuilder<DefaultProxyProviderDbContext>().UseMySql(_options.ConnectionString).Options);
+        protected virtual Task<ProxyProvider> GetProxyProvider() =>
+            Task.FromResult(new ProxyProvider(_options.ConnectionString));
 
         protected abstract Task<List<Proxy>> GetProxies(CQ cq);
 
@@ -64,46 +62,19 @@ namespace ProxyProvider.Collectors.Infrastructures
                         if (proxies?.Any() == true)
                         {
                             var now = DateTime.Now;
-                            proxies.RemoveAll(t => (now - t.LastCheckDt).Days > 1);
+                            proxies.RemoveAll(t => (now - t.UpdateDt).Days > 1);
                             Logger.LogInformation(EventId, $"[Page-{page}]Got proxies: {proxies.Count}");
                             if (proxies.Any())
                             {
-                                var newProxyUniqueKeys = new HashSet<string>();
-                                var uniqueProxies = new List<Proxy>();
-                                foreach (var proxy in proxies)
-                                {
-                                    var key = $"{proxy.Ip}:{proxy.Port}";
-                                    if (!newProxyUniqueKeys.Contains(key))
-                                    {
-                                        uniqueProxies.Add(proxy);
-                                        newProxyUniqueKeys.Add(key);
-                                    }
-                                }
-
-                                var db = await GetDbContext();
-                                var dbExistedProxies = await db.Proxies.AsNoTracking()
-                                    .Where(t => uniqueProxies.Any(a => a.Port == t.Port && a.Ip == t.Ip))
-                                    .ToDictionaryAsync(t => $"{t.Ip}:{t.Port}", t => t);
-                                var newProxies = uniqueProxies
-                                    .Where(t => !dbExistedProxies.ContainsKey($"{t.Ip}:{t.Port}")).ToList();
-                                var tobeUpdatedProxies = uniqueProxies.Where(t => !newProxies.Contains(t)).ToList();
-                                foreach (var tbProxies in tobeUpdatedProxies)
-                                {
-                                    tbProxies.Id = dbExistedProxies[$"{tbProxies.Ip}:{tbProxies.Port}"].Id;
-                                }
-                                db.Proxies.AddRange(newProxies);
-                                foreach (var updProxy in tobeUpdatedProxies)
-                                {
-                                    db.Attach(updProxy).State = EntityState.Modified;
-                                }
-                                await db.SaveChangesAsync();
+                                var pp = await GetProxyProvider();
+                                await pp.AddOrUpdate(proxies);
                                 Logger.LogInformation(EventId,
-                                    $"[Page-{page}]Added proxies: {newProxies.Count}, updated proxies: {tobeUpdatedProxies.Count}");
+                                    $"[Page-{page}]Complete");
                                 page++;
                                 continue;
                             }
                         }
-                        Logger.LogInformation(EventId, $"[Page-{page}]None proxies to be saved, job finished");
+                        Logger.LogInformation(EventId, $"[Page-{page}]None proxies found, job complete");
                         break;
                     }
                     catch (Exception e)
@@ -113,7 +84,7 @@ namespace ProxyProvider.Collectors.Infrastructures
                     }
                     if (error > 10)
                     {
-                        Logger.LogError(EventId, $"[Page-{page}]Error count is over 10, giving up");
+                        Logger.LogError(EventId, $"[Page-{page}]Error occured more than 10 times, giving up");
                         break;
                     }
                 }

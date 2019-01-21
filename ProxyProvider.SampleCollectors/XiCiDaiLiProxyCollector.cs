@@ -6,14 +6,14 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CsQuery;
 using Microsoft.Extensions.Logging;
-using ProxyProvider.Collectors.Infrastructures;
-using ProxyProvider.Models;
+using ProxyProvider.Abstractions.Models;
+using ProxyProvider.SampleCollectors.Infrastructures;
 
-namespace ProxyProvider.Collectors
+namespace ProxyProvider.SampleCollectors
 {
     public class XiCiDaiLiProxyCollector : AbstractProxyCollector
     {
-        public XiCiDaiLiProxyCollector(ProxyCollectorOptions options, ILoggerFactory loggerFactory) : base(options, loggerFactory)
+        protected XiCiDaiLiProxyCollector(ProxyCollectorOptions options, ILoggerFactory loggerFactory) : base(options, loggerFactory)
         {
         }
 
@@ -31,7 +31,7 @@ namespace ProxyProvider.Collectors
                             CreateDt = DateTime.Now,
                             Ip = tds[1].InnerText,
                             Port = tds[2].InnerText,
-                            Type = tds[4].InnerText == "高匿" ? ProxyType.高匿 : 0,
+                            Type = tds[4].InnerText == "高匿" ? ProxyType.HighAnonymous : 0,
                             Schema = tds[5].InnerText,
                             Speed = (int) (double.Parse(Regex
                                                .Match(tds[6].Cq().Children()[0].GetAttribute("title"),
@@ -43,8 +43,7 @@ namespace ProxyProvider.Collectors
                                                    "(\\d+\\.)?(\\d+)")
                                                .Value) *
                                        1000),
-                            UpdateDt = DateTime.Now,
-                            LastCheckDt =
+                            UpdateDt =
                                 DateTime.ParseExact(tds[9].InnerText, "yy-MM-dd HH:mm", DateTimeFormatInfo.CurrentInfo)
                         };
                         return p;

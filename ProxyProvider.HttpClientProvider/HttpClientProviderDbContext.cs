@@ -8,7 +8,7 @@ namespace ProxyProvider.HttpClientProvider
     /// </summary>
     public class HttpClientProviderDbContext : DbContext
     {
-        public DbSet<HttpClientOptions> HttpClientOptionses { get; set; }
+        public DbSet<HttpClientOptions> HttpClientOptions { get; set; }
 
         protected HttpClientProviderDbContext()
         {
