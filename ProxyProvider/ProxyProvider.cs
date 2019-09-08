@@ -33,7 +33,7 @@ namespace ProxyProvider
         }
 
         protected virtual ProxyProviderDbContext GetDbContext() => new ProxyProviderDbContext(
-            new DbContextOptionsBuilder<ProxyProviderDbContext>().UseMySql(_dbConnectionString).Options);
+            new DbContextOptionsBuilder<ProxyProviderDbContext>().UseSqlServer(_dbConnectionString).Options);
 
         public async Task AddOrUpdate(IEnumerable<Proxy> proxies)
         {

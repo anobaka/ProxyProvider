@@ -42,7 +42,7 @@ namespace ProxyProvider.HttpClientProvider
         /// <returns></returns>
         protected virtual HttpClientProviderDbContext GetDbContext() => new HttpClientProviderDbContext(
             new DbContextOptionsBuilder<HttpClientProviderDbContext>()
-                .UseMySql(_dbConnectionString).Options);
+                .UseSqlServer(_dbConnectionString).Options);
 
         public async Task AddOrUpdatePurposeHttpClientOptions(HttpClientOptionsAddOrUpdateRequestModel model)
         {
